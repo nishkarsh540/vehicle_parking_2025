@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import SignupUser from '../components/UserSignup.vue'
 import UserLogin from '@/components/UserLogin.vue' 
-
+import CategoryManage from '@/components/CategoryManage.vue'
 const routes = [
   {
     path: '/',
@@ -20,6 +20,12 @@ const routes = [
     component: UserLogin
   },
   {
+    path: '/categories',
+    name: 'categories',
+    component: CategoryManage,
+    meta: { isAdmin: true }
+  },
+  {
     path: '/about',
     name: 'about',
     // route level code-splitting
@@ -33,5 +39,16 @@ const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
 })
+
+router.beforeEach((to, from, next) => {
+  const user = JSON.parse(localStorage.getItem('user_info'));
+
+  if (to.meta.isAdmin && (user.role !== 'admin')) {
+    next({path:'/login', query:{unauthorized:true}});
+  } else {
+    next();
+  }
+});
+
 
 export default router

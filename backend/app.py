@@ -84,6 +84,66 @@ def user_info():
 
      return user_info,200
 
+@app.route('/api/categories',methods=['GET','POST','PUT','DELETE'])
+@jwt_required()
+def category_management():
+          
+     if request.method == 'GET':
+
+          identity = get_jwt_identity()
+
+          if identity['role'] != 'admin':
+               return jsonify({"message":"Admin access required"}), 403
+          categories = Category.query.all()
+          category_info = [{
+               "id":category.id,
+               "name": category.name
+          } for category in categories]
+
+          return jsonify(category_info), 200
+     if request.method == 'POST':
+          name = request.json.get('name')
+
+          if Category.query.filter_by(name=name).first():
+               return jsonify({"message":"Category already exists"}), 400
+          new_category = Category(name=name)
+
+          db.session.add(new_category)
+          db.session.commit()
+          return jsonify({"message":"Category created successfully"}), 201
+
+     if request.method == 'PUT':
+        parser = reqparse.RequestParser()
+        parser.add_argument('id',type=int,required=True)
+        parser.add_argument('name',type=str,required=True)
+        args = parser.parse_args()
+
+        category=Category.query.get(args['id'])
+
+        if not category:
+            return {'message':'category not found'}, 404
+        
+        category.name=args['name']
+
+        db.session.commit()
+
+        return {'message':'category updated successfully'}, 200
+    
+     if request.method == 'DELETE':
+        parser = reqparse.RequestParser()
+        parser.add_argument('id',type=int,required=True)
+        args = parser.parse_args()
+
+        category=Category.query.get(args['id'])
+
+        if not category:
+            return {'message':'category not found'}, 404
+        
+        db.session.delete(category)
+        db.session.commit()
+
+        return {"message":"category deleted successfully"}, 200
+    
 
 if __name__ == '__main__':
     app.run(debug=True)
